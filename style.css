@@ -1,0 +1,30 @@
+/* div {
+    border: 1px solid black;
+} */
+
+* {
+    font-family: "Comic Sans MS";
+}
+
+form {
+    display: grid;
+    gap: 1rem;
+}
+
+/* ul {
+    border: 1px solid black;
+} */
+
+li {
+    display: flex;
+    justify-content: space-between;
+}
+
+.editBtn {
+    color: green;
+}
+
+.delBtn {
+    color: red;
+}
+
