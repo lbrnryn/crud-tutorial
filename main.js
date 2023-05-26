@@ -1,165 +1,100 @@
-const form = document.querySelector("form");
-const ul = document.querySelector("ul");
-// console.log(ul)
-// console.log(localStorage.getItem("friends"))
-// const person = {name: "ryan", age:28}
-const friends = [
-    {name: "ryan", age:28},
-    {name: "nimrod", age:20}
-]
-// console.log(friends)
-// localStorage.setItem("friends", JSON.stringify(friends))
-// console.log(JSON.parse(localStorage.getItem("friends"))[0].name)
+const form = document.querySelector('form');
+const ul = document.querySelector('ul');
+let personToEdit;
 
-// console.log(typeof Date.now().toString())
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const { name } = e.target.elements;
 
-// CREATE
-form.addEventListener("submit", function(event) {
-    // console.log("submit")
-    event.preventDefault();
-    // console.log(event.target[0].value)
-    // console.log(event.target[1].value)
+    if (personToEdit) {
+        const matchedLi = Array.from(ul.children).find(li => li.dataset.id === personToEdit.id);
+        matchedLi.dataset.name = name.value;
+        matchedLi.innerHTML = `
+            ${name.value}
+                <div>
+                    <span class='editBtn'>&#10000;</span>
+                    <span class='deleteBtn'>&#10006;</span>
+                </div>
+        `;
 
-    // console.log(event.target[2])
-    if (event.target[2].innerText === "Submit" ) {
-        const person = {
-            name: event.target[0].value,
-            id: Date.now().toString()
-        };
-        // console.log(person)
-    
-        const li = document.createElement("li");
+        const data = JSON.parse(localStorage.getItem('people'));
+        const people = data.map(person => person.id === personToEdit.id ? { ...person, name: name.value } : person);
+        localStorage.setItem('people', JSON.stringify(people));
+        
+        personToEdit = undefined;
+        name.value = '';
+    } else {
+       ul.children[0].innerText === 'No data yet' && ul.children[0].remove();
+
+        const person = { name: name.value, id: Date.now().toString() };
+
+        const li = document.createElement('li');
         li.dataset.name = person.name;
         li.dataset.id = person.id;
         li.innerHTML = `
             ${person.name}
             <div>
-                <span class="editBtn">&#10000;</span>
-                <span class="delBtn">&#10006;</span>
+                <span class='editBtn'>&#10000;</span>
+                <span class='deleteBtn'>&#10006;</span>
             </div>
         `;
         ul.appendChild(li);
-        event.target[0].value = "";
-        event.target[1].value = "";
 
-        let friends;
-
-        if(localStorage.getItem("friends") === null || JSON.parse(localStorage.getItem("friends")).length === 0) {
-            friends = [];
-            friends.push(person)
-            // console.log(friends)
-            localStorage.setItem("friends", JSON.stringify(friends))
+        if (localStorage.getItem('people') === null || JSON.parse(localStorage.getItem('people')).length === 0) {
+            localStorage.setItem('people', JSON.stringify([person]));
         } else {
-            friends = JSON.parse(localStorage.getItem("friends"));
-            friends.push(person);
-            // console.log(friends)
-            localStorage.setItem("friends", JSON.stringify(friends))
+            const people = JSON.parse(localStorage.getItem('people'))
+            localStorage.setItem('people', JSON.stringify([...people, person]));
         }
 
-        // console.log(localStorage.getItem("friends"))
-
-    } else {
-        // console.log("edit")
-        // console.log(ul.children)
-        // console.log(Array.from(ul.children))
-        const lis = Array.from(ul.children);
-        const liIndex = lis.findIndex(function(li) {
-            if (li.dataset.id === event.target[1].value) {
-                return li
-            }
-        });
-        // console.log(liIndex)
-        lis[liIndex].innerHTML = `
-            ${event.target[0].value}
-            <div>
-                <span class="editBtn">&#10000;</span>
-                <span class="delBtn">&#10006;</span>
-            </div>
-        `;
-        
-
-        const friends = JSON.parse(localStorage.getItem("friends"));
-        // console.log(friends)
-        // console.dir(event.target)
-
-        const index = friends.findIndex(function(friend) {
-            if (friend.id === event.target[1].value) {
-                return friend
-            }
-            // console.log(friend)
-        });
-        // console.log(index)
-        friends[index] = { name: event.target[0].value, id: event.target[1].value }
-        // console.log(friends)
-        localStorage.setItem("friends", JSON.stringify(friends))
-
-        form[0].value = "";
-        form[1].value = "";
-
+        name.value = '';
     }
 });
 
 
-ul.addEventListener("click", function(event) {
-    // console.log(event.target.parentElement.parentElement.remove())
-
-    // EDIT
-    if (event.target.classList.contains("editBtn")) {
-        const id = event.target.parentElement.parentElement.dataset.id;
-        const name = event.target.parentElement.parentElement.dataset.name;
-
-        form[0].value = name;
-        form[1].value = id;
-        form[2].innerText = "Edit";
+ul.addEventListener('click', function(e) {
+    if (e.target.classList.contains('editBtn')) {
+        personToEdit = e.target.parentElement.parentElement.dataset;
+        form.elements.name.value = personToEdit.name;
+        return;
     }
 
-    // DELETE
-    if (event.target.classList.contains("delBtn")) {
-        event.target.parentElement.parentElement.remove();
+    if (e.target.classList.contains('deleteBtn')) {
+        const li = e.target.parentElement.parentElement;
+        const data = JSON.parse(localStorage.getItem('people'));
+        const people = data.filter(person => person.id !== li.dataset.id);
+        localStorage.setItem('people', JSON.stringify(people));
 
-        const friends = JSON.parse(localStorage.getItem("friends"))
-        // console.log(event.target.parentElement.parentElement.dataset.id)
-        const newFriends = friends.filter(function(friend) {
-            if (friend.id !== event.target.parentElement.parentElement.dataset.id) {
-                return friend
-            }
-        });
-
-        // console.log(newFriends)
-        localStorage.setItem("friends", JSON.stringify(newFriends));
-        // console.log(ul.children.length)
+        personToEdit = undefined;
+        form.elements.name.value = '';
+        li.remove();
         if (ul.children.length === 0) {
-            const li = document.createElement("li");
-            li.innerText = "No Friends Yet";
+            const li = document.createElement('li');
+            li.innerText = 'No data yet';
             ul.appendChild(li);
+            return;
         }
+        return;
     }
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-    if(JSON.parse(localStorage.getItem("friends")).length === 0) {
-        const li = document.createElement("li");
-            li.innerText = "No Friends Yet";
-            ul.appendChild(li);
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('people') === null || JSON.parse(localStorage.getItem('people')).length === 0) {
+        const li = document.createElement('li');
+        li.innerText = 'No data yet';
+        ul.appendChild(li);
     } else {
-        const friends = JSON.parse(localStorage.getItem("friends"));
-        // console.log(friends)
-    
-        for(const friend of friends) {
-            const li = document.createElement("li");
-            li.dataset.name = friend.name;
-            li.dataset.id = friend.id;
-            li.innerHTML = `
-                ${friend.name}
-                <div>
-                    <span class="editBtn">&#10000;</span>
-                    <span class="delBtn">&#10006;</span>
-                </div>
-            `;
-            ul.appendChild(li);
-        }
+        const people = JSON.parse(localStorage.getItem('people'));
+        ul.innerHTML = people.map(person => {
+            return `
+                <li data-name='${person.name}' data-id='${person.id}'>
+                    ${person.name}
+                    <div>
+                        <span class='editBtn'>&#10000;</span>
+                        <span class='deleteBtn'>&#10006;</span>
+                    </div>
+                </li>
+            `
+        }).join('');
     }
-
-
-
-})
+});
